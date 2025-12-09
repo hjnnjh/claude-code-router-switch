@@ -1,6 +1,8 @@
-# CCR Model Switch
+![](CCRS.png)
 
-A lightweight utility to manage [Claude Code Router (CCR)](https://github.com/richards199999/Claude-Code-Router) models and synchronize them with your Claude Code settings seamlessly.
+# Claude Code Router Switch
+
+A lightweight utility to manage [Claude Code Router (CCR)](https://github.com/musistudio/claude-code-router) models and synchronize them with your Claude Code settings seamlessly.
 
 ## Features
 
@@ -19,7 +21,7 @@ Ensure you have the following installed:
 - **Linux** (Bash shell)
 - **Python 3**
 - **[uv](https://github.com/astral-sh/uv)** (Fast Python package installer and runner)
-- **ccr** (Claude Code Router CLI)
+- **ccr** (Claude Code Router)
 
 ## Installation
 
