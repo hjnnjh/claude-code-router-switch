@@ -67,8 +67,21 @@ q. Quit (Without Applying)
 2. Follow the interactive prompts to choose providers and models.
 3. Select **Apply Changes & Exit** to save your configuration, restart CCR, and update Claude Code.
 
+## Uninstallation
+
+To remove the tool completely:
+
+```bash
+./uninstall.sh
+```
+
+This will remove:
+- The `ccrswitch` command from `~/.local/bin`
+- The installation directory `~/.local/share/ccr-switch`
+
 ## File Structure
 
 - `sync_ccr.sh`: Main logic script (Bash).
 - `ccr_helper.py`: Helper script for JSON manipulation (Python).
 - `install.sh`: Installation script.
+- `uninstall.sh`: Uninstallation script.
