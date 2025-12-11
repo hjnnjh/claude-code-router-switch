@@ -7,7 +7,7 @@ A lightweight utility to manage [Claude Code Router (CCR)](https://github.com/mu
 ## Features
 
 - **👀 View Models**: List all available providers and models configured in your CCR `config.json`.
-- **➕ Add Models**: Easily add new models to existing providers.
+- **➕ Add Models**: Select a provider from a menu and add new models.
 - **🔄 Update Router**:
   - **Global Update**: Change the model for ALL routes at once.
   - **Granular Update**: Change the model for a specific route (e.g., `default`, `think`, `webSearch`) via an interactive menu.

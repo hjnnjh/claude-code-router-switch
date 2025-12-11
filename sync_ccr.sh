@@ -117,6 +117,43 @@ select_route_interactive() {
     fi
 }
 
+select_provider_interactive() {
+    echo "Fetching available providers..."
+    providers_output=$(run_helper list_providers)
+
+    if [ -z "$providers_output" ]; then
+        echo "No providers found."
+        return 1
+    fi
+
+    echo "Available Providers:"
+    i=1
+    declare -a provider_names
+
+    while IFS= read -r provider; do
+        provider=$(echo "$provider" | xargs)
+        if [ -z "$provider" ]; then continue; fi
+        echo "$i) $provider"
+        provider_names[i]="$provider"
+        ((i++))
+    done <<< "$providers_output"
+
+    count=$((i-1))
+    if [ "$count" -eq 0 ]; then
+        echo "No valid providers found."
+        return 1
+    fi
+
+    read -p "Select a provider (1-$count): " selection
+
+    if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "$count" ]; then
+        SELECTED_PROVIDER="${provider_names[$selection]}"
+        return 0
+    else
+        echo "Invalid selection."
+        return 1
+    fi
+}
 
 while true; do
     echo "----------------------------------------"
@@ -137,14 +174,13 @@ while true; do
             run_helper list
             ;;
         2)
-            echo "Available Providers:"
-            run_helper list_providers
-            read -p "Enter Provider Name: " p_name
-            read -p "Enter New Model Name: " m_name
-            if [ -n "$p_name" ] && [ -n "$m_name" ]; then
-                run_helper add_model "$p_name" "$m_name"
-            else
-                echo "Invalid input."
+            if select_provider_interactive; then
+                read -p "Enter New Model Name: " m_name
+                if [ -n "$m_name" ]; then
+                    run_helper add_model "$SELECTED_PROVIDER" "$m_name"
+                else
+                    echo "Invalid model name."
+                fi
             fi
             ;;
         3)
