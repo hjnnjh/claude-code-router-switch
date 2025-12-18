@@ -6,6 +6,7 @@ A lightweight utility to manage [Claude Code Router (CCR)](https://github.com/mu
 
 ## Features
 
+- **📋 View Router Config**: Display current router configuration in a formatted table with route keys, providers, and models.
 - **👀 View Models**: List all available providers and models configured in your CCR `config.json`.
 - **➕ Add Models**: Select a provider from a menu and add new models.
 - **🔄 Update Router**:
@@ -54,18 +55,28 @@ ccrswitch
 ----------------------------------------
 CCR Model Manager
 ----------------------------------------
-1. View Models
-2. Add Model to Provider
-3. Update Router (All Routes)
-4. Update Router (Single Route)
-5. Apply Changes & Exit (Update Configs & Restart)
+1. View Current Router Config
+2. View Models
+3. Add Model to Provider
+4. Update Router (All Routes)
+5. Update Router (Single Route)
+6. Apply Changes & Exit (Update Configs & Restart)
+----------------------------------------
+Presets Management:
+7. View Presets
+8. Save Current Config as Preset
+9. Load Preset
+0. View Preset Details
+----------------------------------------
+d. Delete Preset
 q. Quit (Without Applying)
 ----------------------------------------
 ```
 
 1. Select an option.
 2. Follow the interactive prompts to choose providers and models.
-3. Select **Apply Changes & Exit** to save your configuration, restart CCR, and update Claude Code.
+3. Manage presets to save and restore configurations.
+4. Select **Apply Changes & Exit** to save your configuration, restart CCR, and update Claude Code.
 
 ## Uninstallation
 
@@ -81,7 +92,73 @@ This will remove:
 
 ## File Structure
 
-- `sync_ccr.sh`: Main logic script (Bash).
-- `ccr_helper.py`: Helper script for JSON manipulation (Python).
+- `sync_ccr.sh`: Main interactive menu script (Bash).
+- `ccr_helper.py`: Helper script for JSON manipulation and CLI operations (Python).
 - `install.sh`: Installation script.
 - `uninstall.sh`: Uninstallation script.
+- `.spec-workflow/`: Specification and workflow templates for project documentation.
+
+## Command Reference
+
+### View Current Router Configuration
+
+Displays all active routes in a formatted table:
+
+```bash
+ccrswitch
+# Then select option 1: View Current Router Config
+```
+
+**Output Example:**
+```
+Current Router Configuration:
+
+-----------------------------------------------------------------------
+Route Key       | Provider             | Model
+-----------------------------------------------------------------------
+default         | Copilot Coding Plan  | claude-sonnet-4.5
+background      | Copilot Coding Plan  | claude-haiku-4.5
+think           | Copilot Coding Plan  | claude-sonnet-4.5
+webSearch       | Poe                  | claude-haiku-4.5
+-----------------------------------------------------------------------
+
+Total: 4 route(s)
+```
+
+### Preset Management
+
+Save and restore entire router configurations:
+
+- **Save Preset**: Capture current configuration with an optional description.
+- **Load Preset**: Restore a previously saved configuration.
+- **View Presets**: List all saved presets with timestamps.
+- **View Preset Details**: Show detailed information of a specific preset.
+- **Delete Preset**: Remove a saved preset.
+
+This allows you to quickly switch between different router configurations without manual adjustment.
+
+## Troubleshooting
+
+### "No Router configuration found"
+
+**Cause**: The `Router` section in `~/.claude-code-router/config.json` is empty or missing.
+
+**Solution**:
+1. Ensure CCR is properly installed and configured.
+2. Check that `~/.claude-code-router/config.json` contains valid routes.
+
+### "No valid routes found"
+
+**Cause**: Routes in the configuration don't follow the `provider,model` format.
+
+**Solution**:
+1. Edit `~/.claude-code-router/config.json` to verify route format.
+2. Ensure routes are formatted as `"route_key": "provider_name,model_name"`.
+
+## Contributing
+
+Feel free to submit issues, fork the repository, and create pull requests for any improvements.
+
+## License
+
+This project is provided as-is for managing Claude Code Router configurations.
