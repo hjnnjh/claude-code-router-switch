@@ -22,8 +22,8 @@
 
 确保你已安装以下工具：
 
-- **Linux** (Bash shell)
-- **Python 3**
+- **macOS** (10.12+) 或 **Linux** (需要 Bash shell)
+- **Python 3** (3.8+)
 - **[uv](https://github.com/astral-sh/uv)** (快速 Python 包管理器)
 - **ccr** (Claude Code Router)
 

@@ -21,8 +21,8 @@ A lightweight utility to manage [Claude Code Router (CCR)](https://github.com/mu
 
 Ensure you have the following installed:
 
-- **Linux** (Bash shell)
-- **Python 3**
+- **macOS** (10.12+) or **Linux** (with Bash shell)
+- **Python 3** (3.8+)
 - **[uv](https://github.com/astral-sh/uv)** (Fast Python package installer and runner)
 - **ccr** (Claude Code Router)
 
