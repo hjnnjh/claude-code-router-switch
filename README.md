@@ -16,6 +16,7 @@ A lightweight utility to manage [Claude Code Router (CCR)](https://github.com/mu
   - **Granular Update**: Change the model for a specific route (e.g., `default`, `think`, `webSearch`) via an interactive menu.
 - **⚡ Auto-Sync**: Automatically restarts the `ccr` service and updates `~/.claude/settings.json` with the selected model.
 - **🚀 Global Command**: Installs as a `ccrswitch` command usable from anywhere.
+- **💾 Preset Management**: Save and restore complete router configuration snapshots.
 
 ## Prerequisites
 
@@ -77,7 +78,7 @@ q. Quit (Without Applying)
 
 1. Select an option.
 2. Follow the interactive prompts to choose providers and models.
-3. Manage presets to save and restore configurations.
+3. Use the Preset features to save and restore configurations.
 4. Select **Apply Changes & Exit** to save your configuration, restart CCR, and update Claude Code.
 
 ## Uninstallation
@@ -156,6 +157,44 @@ This allows you to quickly switch between different router configurations withou
 **Solution**:
 1. Edit `~/.claude-code-router/config.json` to verify route format.
 2. Ensure routes are formatted as `"route_key": "provider_name,model_name"`.
+
+## Advanced Usage
+
+### Direct Python Helper Invocation
+
+For scripted bulk modifications, you can invoke the helper directly:
+
+```bash
+# List all models
+uv run python ccr_helper.py list
+
+# List all providers
+uv run python ccr_helper.py list_providers
+
+# View router configuration
+uv run python ccr_helper.py show_router
+
+# Get all route keys
+uv run python ccr_helper.py get_router_keys
+
+# Add model to provider
+uv run python ccr_helper.py add_model "provider_name" "model_name"
+
+# Update single route
+uv run python ccr_helper.py update_router "route_key" "provider_name" "model_name"
+
+# Update all routes
+uv run python ccr_helper.py update_router_all "provider_name" "model_name"
+
+# Update Claude Code settings
+uv run python ccr_helper.py update_settings "model_name"
+```
+
+### Configuration Files
+
+- **`~/.claude-code-router/config.json`**: Main configuration file containing Providers, Models, and Router sections.
+- **`~/.claude/settings.json`**: Claude Code settings file containing the currently selected model.
+- **`~/.claude-code-router/presets/`**: Directory for saved preset configuration files.
 
 ## Contributing
 
