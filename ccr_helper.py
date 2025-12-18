@@ -1,18 +1,71 @@
+#!/usr/bin/env python3
+"""CCR (Claude Code Router) 配置管理辅助工具.
+
+此模块提供命令行接口用于管理 Claude Code Router 的配置,包括:
+- 模型和提供商的列表与添加
+- 路由配置的更新
+- 预设配置的保存、加载和管理
+- Claude 设置的同步
+
+主要功能:
+    - list: 列出所有可用的模型
+    - list_providers: 列出所有提供商
+    - add_model: 添加新模型到指定提供商
+    - update_router: 更新单个路由配置
+    - update_router_all: 批量更新所有路由
+    - get_router_keys: 获取所有路由键
+    - update_settings: 更新 Claude 设置文件
+    - list_presets: 列出所有预设配置
+    - save_preset: 保存当前配置为预设
+    - load_preset: 加载预设配置
+    - delete_preset: 删除预设配置
+    - show_preset: 显示预设详情
+"""
+
 import json
 import sys
-import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 CONFIG_PATH = Path.home() / ".claude-code-router" / "config.json"
 SETTINGS_PATH = Path.home() / ".claude" / "settings.json"
+PRESETS_DIR = Path.home() / ".claude-code-router" / "presets"
+
 
 def load_json(path):
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def save_json(path, data):
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def ensure_presets_dir():
+    """确保预设目录存在"""
+    PRESETS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_preset_path(name):
+    """
+    构造安全的预设文件路径
+    过滤非法字符,防止路径穿越攻击
+    """
+    safe_name = "".join(c for c in name if c.isalnum() or c in ("-", "_"))
+    if not safe_name or safe_name != name:
+        print(
+            f"Error: Invalid preset name '{name}'. "
+            f"Only alphanumeric, dash and underscore allowed."
+        )
+        sys.exit(1)
+    return PRESETS_DIR / f"{safe_name}.json"
+
+
+def get_timestamp():
+    """返回 ISO 8601 格式的当前时间"""
+    return datetime.now(timezone.utc).isoformat()
+
 
 def list_models():
     data = load_json(CONFIG_PATH)
@@ -22,11 +75,13 @@ def list_models():
         for m in p.get("models", []):
             print(f"{p_name},{m}")
 
+
 def list_providers():
     data = load_json(CONFIG_PATH)
     providers = data.get("Providers", [])
     for p in providers:
         print(p.get("name"))
+
 
 def add_model(provider_name, model_name):
     data = load_json(CONFIG_PATH)
@@ -38,7 +93,10 @@ def add_model(provider_name, model_name):
                 p["models"].append(model_name)
                 found = True
             else:
-                print(f"Model '{model_name}' already exists for provider '{provider_name}'.")
+                print(
+                    f"Model '{model_name}' already exists "
+                    f"for provider '{provider_name}'."
+                )
                 return
             break
 
@@ -48,6 +106,7 @@ def add_model(provider_name, model_name):
     else:
         print(f"Error: Provider '{provider_name}' not found.")
         sys.exit(1)
+
 
 def update_router(route_key, provider, model):
     data = load_json(CONFIG_PATH)
@@ -61,6 +120,7 @@ def update_router(route_key, provider, model):
     else:
         print(f"Error: Route '{route_key}' not found.")
         sys.exit(1)
+
 
 def update_router_all(provider, model):
     data = load_json(CONFIG_PATH)
@@ -76,11 +136,13 @@ def update_router_all(provider, model):
     save_json(CONFIG_PATH, data)
     print(f"Updated {count} routes to '{val}'.")
 
+
 def get_router_keys():
     data = load_json(CONFIG_PATH)
     router = data.get("Router", {})
     keys = [k for k, v in router.items() if isinstance(v, str)]
     print(",".join(keys))
+
 
 def update_settings(model_name=None):
     if not model_name:
@@ -90,13 +152,163 @@ def update_settings(model_name=None):
             parts = default_val.split(",")
             model_name = parts[-1].strip()
         else:
-            print("Error: Could not determine default model from Router configuration.")
+            print(
+                "Error: Could not determine default "
+                "model from Router configuration."
+            )
             sys.exit(1)
 
     settings = load_json(SETTINGS_PATH)
     settings["model"] = model_name
     save_json(SETTINGS_PATH, settings)
     print(f"Updated ~/.claude/settings.json with model: {model_name}")
+
+
+def list_presets():
+    """列出所有可用预设及其描述"""
+    ensure_presets_dir()
+
+    presets = sorted(PRESETS_DIR.glob("*.json"))
+    if not presets:
+        print("No presets found.")
+        return
+
+    for preset_file in presets:
+        try:
+            data = load_json(preset_file)
+            name = data.get("name", preset_file.stem)
+            preset_desc = data.get("description", "No description")
+            updated = data.get("updated_at", "Unknown")
+            print(f"{name} | {preset_desc} | Updated: {updated}")
+        except Exception as e:
+            print(f"Warning: Failed to read {preset_file.name}: {e}")
+
+
+def save_preset(name, description=""):
+    """
+    将当前 Router 配置保存为预设
+
+    参数:
+        name: 预设名称
+        description: 预设描述(可选)
+    """
+    ensure_presets_dir()
+    preset_path = get_preset_path(name)
+
+    # 检查同名预设
+    existing_created_at = None
+    if preset_path.exists():
+        print(
+            f"Warning: Preset '{name}' already exists. It will be overwritten."
+        )
+        try:
+            existing_data = load_json(preset_path)
+            existing_created_at = existing_data.get("created_at")
+        except Exception:
+            pass
+
+    # 加载当前配置
+    config = load_json(CONFIG_PATH)
+    router = config.get("Router", {})
+
+    if not router:
+        print("Error: No Router configuration found in config.json")
+        sys.exit(1)
+
+    # 构造预设数据
+    preset_data = {
+        "name": name,
+        "description": description,
+        "created_at": existing_created_at or get_timestamp(),
+        "updated_at": get_timestamp(),
+        "router": router,
+    }
+
+    # 保存预设
+    save_json(preset_path, preset_data)
+    print(f"Saved preset '{name}' to {preset_path}")
+
+
+def load_preset(name):
+    """
+    加载预设并更新当前 config.json 的 Router 配置
+
+    参数:
+        name: 预设名称
+    """
+    ensure_presets_dir()
+    preset_path = get_preset_path(name)
+
+    if not preset_path.exists():
+        print(f"Error: Preset '{name}' not found.")
+        print("Use 'list_presets' to see available presets.")
+        sys.exit(1)
+
+    # 加载预设
+    preset_data = load_json(preset_path)
+    preset_router = preset_data.get("router")
+
+    if not preset_router or not isinstance(preset_router, dict):
+        print(
+            f"Error: Invalid preset format in '{name}'. "
+            f"Missing or invalid 'router' field."
+        )
+        sys.exit(1)
+
+    # 更新配置
+    config = load_json(CONFIG_PATH)
+    config["Router"] = preset_router
+    save_json(CONFIG_PATH, config)
+
+    preset_desc = preset_data.get("description", "No description")
+    print(f"Loaded preset '{name}': {preset_desc}")
+    print(f"Router configuration updated with {len(preset_router)} routes.")
+
+
+def delete_preset(name):
+    """
+    删除指定预设文件
+
+    参数:
+        name: 预设名称
+    """
+    ensure_presets_dir()
+    preset_path = get_preset_path(name)
+
+    if not preset_path.exists():
+        print(f"Error: Preset '{name}' not found.")
+        sys.exit(1)
+
+    preset_path.unlink()
+    print(f"Deleted preset '{name}'.")
+
+
+def show_preset(name):
+    """
+    显示预设的完整 Router 配置
+
+    参数:
+        name: 预设名称
+    """
+    ensure_presets_dir()
+    preset_path = get_preset_path(name)
+
+    if not preset_path.exists():
+        print(f"Error: Preset '{name}' not found.")
+        sys.exit(1)
+
+    preset_data = load_json(preset_path)
+
+    print(f"Preset: {preset_data.get('name')}")
+    print(f"Description: {preset_data.get('description', 'N/A')}")
+    print(f"Created: {preset_data.get('created_at', 'Unknown')}")
+    print(f"Updated: {preset_data.get('updated_at', 'Unknown')}")
+    print("\nRouter Configuration:")
+
+    router = preset_data.get("router", {})
+    for key, value in router.items():
+        print(f"  {key}: {value}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -124,6 +336,29 @@ if __name__ == "__main__":
         get_router_keys()
     elif cmd == "update_settings":
         update_settings()
+    elif cmd == "list_presets":
+        list_presets()
+    elif cmd == "save_preset":
+        if len(sys.argv) < 3:
+            print("Usage: save_preset <name> [description]")
+            sys.exit(1)
+        desc = sys.argv[3] if len(sys.argv) > 3 else ""
+        save_preset(sys.argv[2], desc)
+    elif cmd == "load_preset":
+        if len(sys.argv) != 3:
+            print("Usage: load_preset <name>")
+            sys.exit(1)
+        load_preset(sys.argv[2])
+    elif cmd == "delete_preset":
+        if len(sys.argv) != 3:
+            print("Usage: delete_preset <name>")
+            sys.exit(1)
+        delete_preset(sys.argv[2])
+    elif cmd == "show_preset":
+        if len(sys.argv) != 3:
+            print("Usage: show_preset <name>")
+            sys.exit(1)
+        show_preset(sys.argv[2])
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)

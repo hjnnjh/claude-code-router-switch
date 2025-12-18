@@ -35,6 +35,7 @@ fi
 echo "Creating directories..."
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$BIN_DIR"
+mkdir -p "$HOME/.claude-code-router/presets"
 
 # 3. Copy Files
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -155,6 +155,106 @@ select_provider_interactive() {
     fi
 }
 
+select_preset_interactive() {
+    echo "Fetching available presets..."
+    presets_output=$(run_helper list_presets)
+
+    if [ -z "$presets_output" ]; then
+        echo "No presets found."
+        return 1
+    fi
+
+    echo "Available Presets:"
+    i=1
+    declare -a preset_names
+
+    while IFS='|' read -r name desc updated; do
+        # Trim whitespace
+        name=$(echo "$name" | xargs)
+        desc=$(echo "$desc" | xargs)
+
+        if [ -z "$name" ]; then continue; fi
+
+        echo "$i) $name - $desc"
+        preset_names[i]="$name"
+        ((i++))
+    done <<< "$presets_output"
+
+    count=$((i-1))
+    if [ "$count" -eq 0 ]; then
+        echo "No valid presets found."
+        return 1
+    fi
+
+    read -p "Select a preset (1-$count): " selection
+
+    if [[ "$selection" =~ ^[0-9]+$ ]] && [ "$selection" -ge 1 ] && [ "$selection" -le "$count" ]; then
+        SELECTED_PRESET="${preset_names[$selection]}"
+        return 0
+    else
+        echo "Invalid selection."
+        return 1
+    fi
+}
+
+save_preset_interactive() {
+    read -p "Enter preset name: " preset_name
+    if [ -z "$preset_name" ]; then
+        echo "Error: Preset name cannot be empty."
+        return 1
+    fi
+
+    read -p "Enter preset description (optional): " preset_desc
+
+    if [ -n "$preset_desc" ]; then
+        run_helper save_preset "$preset_name" "$preset_desc"
+    else
+        run_helper save_preset "$preset_name"
+    fi
+
+    if [ $? -eq 0 ]; then
+        echo "✓ Preset saved successfully."
+    else
+        echo "✗ Failed to save preset."
+        return 1
+    fi
+}
+
+load_preset_interactive() {
+    if select_preset_interactive; then
+        run_helper load_preset "$SELECTED_PRESET"
+        if [ $? -eq 0 ]; then
+            echo "✓ Preset loaded successfully."
+            apply_changes
+        else
+            echo "✗ Failed to load preset."
+            return 1
+        fi
+    fi
+}
+
+delete_preset_interactive() {
+    if select_preset_interactive; then
+        read -p "Are you sure you want to delete preset '$SELECTED_PRESET'? (y/n): " confirm
+        if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            run_helper delete_preset "$SELECTED_PRESET"
+            if [ $? -eq 0 ]; then
+                echo "✓ Preset deleted successfully."
+            else
+                echo "✗ Failed to delete preset."
+            fi
+        else
+            echo "Deletion cancelled."
+        fi
+    fi
+}
+
+view_preset_interactive() {
+    if select_preset_interactive; then
+        run_helper show_preset "$SELECTED_PRESET"
+    fi
+}
+
 while true; do
     echo "----------------------------------------"
     echo "CCR Model Manager"
@@ -164,6 +264,14 @@ while true; do
     echo "3. Update Router (All Routes)"
     echo "4. Update Router (Single Route)"
     echo "5. Apply Changes & Exit (Update Configs & Restart)"
+    echo "----------------------------------------"
+    echo "Presets Management:"
+    echo "6. View Presets"
+    echo "7. Save Current Config as Preset"
+    echo "8. Load Preset"
+    echo "9. View Preset Details"
+    echo "0. Delete Preset"
+    echo "----------------------------------------"
     echo "q. Quit (Without Applying)"
     echo "----------------------------------------"
     read -p "Select an option: " choice
@@ -202,6 +310,22 @@ while true; do
         5)
             apply_changes
             break
+            ;;
+        6)
+            echo "Available Presets:"
+            run_helper list_presets
+            ;;
+        7)
+            save_preset_interactive
+            ;;
+        8)
+            load_preset_interactive
+            ;;
+        9)
+            view_preset_interactive
+            ;;
+        0)
+            delete_preset_interactive
             ;;
         q)
             echo "Exiting..."
