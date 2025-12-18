@@ -3,11 +3,12 @@
 
 此模块提供命令行接口用于管理 Claude Code Router 的配置,包括:
 - 模型和提供商的列表与添加
-- 路由配置的更新
+- 路由配置的查看与更新
 - 预设配置的保存、加载和管理
 - Claude 设置的同步
 
 主要功能:
+    - show_router: 格式化显示当前 Router 配置
     - list: 列出所有可用的模型
     - list_providers: 列出所有提供商
     - add_model: 添加新模型到指定提供商
@@ -26,28 +27,31 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 CONFIG_PATH = Path.home() / ".claude-code-router" / "config.json"
 SETTINGS_PATH = Path.home() / ".claude" / "settings.json"
 PRESETS_DIR = Path.home() / ".claude-code-router" / "presets"
 
 
-def load_json(path):
+def load_json(path: Path) -> Dict[str, Any]:
+    """加载 JSON 文件"""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def save_json(path, data):
+def save_json(path: Path, data: Dict[str, Any]) -> None:
+    """保存数据到 JSON 文件"""
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def ensure_presets_dir():
+def ensure_presets_dir() -> None:
     """确保预设目录存在"""
     PRESETS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def get_preset_path(name):
+def get_preset_path(name: str) -> Path:
     """
     构造安全的预设文件路径
     过滤非法字符,防止路径穿越攻击
@@ -62,12 +66,13 @@ def get_preset_path(name):
     return PRESETS_DIR / f"{safe_name}.json"
 
 
-def get_timestamp():
+def get_timestamp() -> str:
     """返回 ISO 8601 格式的当前时间"""
     return datetime.now(timezone.utc).isoformat()
 
 
-def list_models():
+def list_models() -> None:
+    """列出所有可用的模型"""
     data = load_json(CONFIG_PATH)
     providers = data.get("Providers", [])
     for p in providers:
@@ -76,14 +81,16 @@ def list_models():
             print(f"{p_name},{m}")
 
 
-def list_providers():
+def list_providers() -> None:
+    """列出所有提供商"""
     data = load_json(CONFIG_PATH)
     providers = data.get("Providers", [])
     for p in providers:
         print(p.get("name"))
 
 
-def add_model(provider_name, model_name):
+def add_model(provider_name: str, model_name: str) -> None:
+    """添加新模型到指定提供商"""
     data = load_json(CONFIG_PATH)
     providers = data.get("Providers", [])
     found = False
@@ -108,7 +115,8 @@ def add_model(provider_name, model_name):
         sys.exit(1)
 
 
-def update_router(route_key, provider, model):
+def update_router(route_key: str, provider: str, model: str) -> None:
+    """更新单个路由配置"""
     data = load_json(CONFIG_PATH)
     router = data.get("Router", {})
     val = f"{provider},{model}"
@@ -122,7 +130,8 @@ def update_router(route_key, provider, model):
         sys.exit(1)
 
 
-def update_router_all(provider, model):
+def update_router_all(provider: str, model: str) -> None:
+    """批量更新所有路由"""
     data = load_json(CONFIG_PATH)
     router = data.get("Router", {})
     val = f"{provider},{model}"
@@ -137,14 +146,16 @@ def update_router_all(provider, model):
     print(f"Updated {count} routes to '{val}'.")
 
 
-def get_router_keys():
+def get_router_keys() -> None:
+    """获取所有路由键"""
     data = load_json(CONFIG_PATH)
     router = data.get("Router", {})
     keys = [k for k, v in router.items() if isinstance(v, str)]
     print(",".join(keys))
 
 
-def update_settings(model_name=None):
+def update_settings(model_name: Optional[str] = None) -> None:
+    """更新 Claude 设置文件中的模型配置"""
     if not model_name:
         config = load_json(CONFIG_PATH)
         default_val = config.get("Router", {}).get("default", "")
@@ -164,7 +175,7 @@ def update_settings(model_name=None):
     print(f"Updated ~/.claude/settings.json with model: {model_name}")
 
 
-def list_presets():
+def list_presets() -> None:
     """列出所有可用预设及其描述"""
     ensure_presets_dir()
 
@@ -184,7 +195,7 @@ def list_presets():
             print(f"Warning: Failed to read {preset_file.name}: {e}")
 
 
-def save_preset(name, description=""):
+def save_preset(name: str, description: str = "") -> None:
     """
     将当前 Router 配置保存为预设
 
@@ -196,7 +207,7 @@ def save_preset(name, description=""):
     preset_path = get_preset_path(name)
 
     # 检查同名预设
-    existing_created_at = None
+    existing_created_at: Optional[str] = None
     if preset_path.exists():
         print(
             f"Warning: Preset '{name}' already exists. It will be overwritten."
@@ -216,7 +227,7 @@ def save_preset(name, description=""):
         sys.exit(1)
 
     # 构造预设数据
-    preset_data = {
+    preset_data: Dict[str, Any] = {
         "name": name,
         "description": description,
         "created_at": existing_created_at or get_timestamp(),
@@ -229,7 +240,7 @@ def save_preset(name, description=""):
     print(f"Saved preset '{name}' to {preset_path}")
 
 
-def load_preset(name):
+def load_preset(name: str) -> None:
     """
     加载预设并更新当前 config.json 的 Router 配置
 
@@ -265,7 +276,7 @@ def load_preset(name):
     print(f"Router configuration updated with {len(preset_router)} routes.")
 
 
-def delete_preset(name):
+def delete_preset(name: str) -> None:
     """
     删除指定预设文件
 
@@ -283,7 +294,7 @@ def delete_preset(name):
     print(f"Deleted preset '{name}'.")
 
 
-def show_preset(name):
+def show_preset(name: str) -> None:
     """
     显示预设的完整 Router 配置
 
@@ -310,13 +321,97 @@ def show_preset(name):
         print(f"  {key}: {value}")
 
 
+def _parse_routes(
+    valid_routes: Dict[str, str]
+) -> Tuple[List[Tuple[str, str, str]], int, int, int]:
+    """解析路由值并计算列宽"""
+    parsed_routes: List[Tuple[str, str, str]] = []
+    max_key_len = max(len(k) for k in valid_routes.keys())
+    max_provider_len = 0
+    max_model_len = 0
+
+    for key, value in valid_routes.items():
+        parts = value.split(",", 1)
+        if len(parts) == 2:
+            provider, model = parts[0].strip(), parts[1].strip()
+            parsed_routes.append((key, provider, model))
+            max_provider_len = max(max_provider_len, len(provider))
+            max_model_len = max(max_model_len, len(model))
+
+    return parsed_routes, max_key_len, max_provider_len, max_model_len
+
+
+def _print_router_table(
+    parsed_routes: List[Tuple[str, str, str]],
+    key_width: int,
+    provider_width: int,
+    model_width: int
+) -> None:
+    """打印路由配置表格"""
+    header = (f"{'Route Key':<{key_width}} | "
+              f"{'Provider':<{provider_width}} | "
+              f"{'Model':<{model_width}}")
+    separator = "-" * len(header)
+
+    print(separator)
+    print(header)
+    print(separator)
+
+    for key, provider, model in parsed_routes:
+        row = (f"{key:<{key_width}} | "
+               f"{provider:<{provider_width}} | "
+               f"{model:<{model_width}}")
+        print(row)
+
+    print(separator)
+    print(f"\nTotal: {len(parsed_routes)} route(s)")
+
+
+def show_router() -> None:
+    """格式化显示当前 Router 配置"""
+    data = load_json(CONFIG_PATH)
+    router = data.get("Router", {})
+
+    if not router:
+        print("No Router configuration found.")
+        return
+
+    # 过滤有效路由（字符串类型且包含逗号）
+    valid_routes: Dict[str, str] = {
+        k: v for k, v in router.items() if isinstance(v, str) and "," in v
+    }
+
+    if not valid_routes:
+        print("No valid routes found in Router configuration.")
+        return
+
+    # 解析路由值并计算列宽
+    result = _parse_routes(valid_routes)
+    parsed_routes, max_key_len, max_provider_len, max_model_len = result
+
+    if not parsed_routes:
+        print("Error: No valid 'provider,model' format found in Router.")
+        return
+
+    # 设置列宽（最小宽度保护）
+    key_width = max(max_key_len, 10)
+    provider_width = max(max_provider_len, 15)
+    model_width = max(max_model_len, 15)
+
+    # 绘制表格
+    _print_router_table(parsed_routes, key_width, provider_width,
+                        model_width)
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit(1)
 
     cmd = sys.argv[1]
 
-    if cmd == "list":
+    if cmd == "show_router":
+        show_router()
+    elif cmd == "list":
         list_models()
     elif cmd == "list_providers":
         list_providers()

@@ -255,33 +255,45 @@ view_preset_interactive() {
     fi
 }
 
+view_router_interactive() {
+    echo "Current Router Configuration:"
+    echo ""
+    run_helper show_router
+    echo ""
+    read -p "Press Enter to continue..."
+}
+
 while true; do
     echo "----------------------------------------"
     echo "CCR Model Manager"
     echo "----------------------------------------"
-    echo "1. View Models"
-    echo "2. Add Model to Provider"
-    echo "3. Update Router (All Routes)"
-    echo "4. Update Router (Single Route)"
-    echo "5. Apply Changes & Exit (Update Configs & Restart)"
+    echo "1. View Current Router Config"
+    echo "2. View Models"
+    echo "3. Add Model to Provider"
+    echo "4. Update Router (All Routes)"
+    echo "5. Update Router (Single Route)"
+    echo "6. Apply Changes & Exit (Update Configs & Restart)"
     echo "----------------------------------------"
     echo "Presets Management:"
-    echo "6. View Presets"
-    echo "7. Save Current Config as Preset"
-    echo "8. Load Preset"
-    echo "9. View Preset Details"
-    echo "0. Delete Preset"
+    echo "7. View Presets"
+    echo "8. Save Current Config as Preset"
+    echo "9. Load Preset"
+    echo "0. View Preset Details"
     echo "----------------------------------------"
+    echo "d. Delete Preset"
     echo "q. Quit (Without Applying)"
     echo "----------------------------------------"
     read -p "Select an option: " choice
 
     case $choice in
         1)
+            view_router_interactive
+            ;;
+        2)
             echo "Current Models:"
             run_helper list
             ;;
-        2)
+        3)
             if select_provider_interactive; then
                 read -p "Enter New Model Name: " m_name
                 if [ -n "$m_name" ]; then
@@ -291,14 +303,14 @@ while true; do
                 fi
             fi
             ;;
-        3)
+        4)
             echo "Select the model to use for ALL routes:"
             if select_model_interactive; then
                 run_helper update_router_all "$SELECTED_PROVIDER" "$SELECTED_MODEL"
                 apply_changes
             fi
             ;;
-        4)
+        5)
             if select_route_interactive; then
                 echo "Select the model for route '$SELECTED_ROUTE':"
                 if select_model_interactive; then
@@ -307,24 +319,24 @@ while true; do
                 fi
             fi
             ;;
-        5)
+        6)
             apply_changes
             break
             ;;
-        6)
+        7)
             echo "Available Presets:"
             run_helper list_presets
             ;;
-        7)
+        8)
             save_preset_interactive
             ;;
-        8)
+        9)
             load_preset_interactive
             ;;
-        9)
+        0)
             view_preset_interactive
             ;;
-        0)
+        d|D)
             delete_preset_interactive
             ;;
         q)
