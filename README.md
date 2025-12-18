@@ -163,4 +163,4 @@ Feel free to submit issues, fork the repository, and create pull requests for an
 
 ## License
 
-This project is provided as-is for managing Claude Code Router configurations.
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.

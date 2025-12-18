@@ -204,4 +204,4 @@ uv run python ccr_helper.py update_settings "model_name"
 
 ## 许可证
 
-本项目按原样提供，用于管理 Claude Code Router 配置。
+本项目采用 [MIT License](LICENSE) 许可证 - 详见 LICENSE 文件。
