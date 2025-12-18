@@ -4,6 +4,8 @@
 
 A lightweight utility to manage [Claude Code Router (CCR)](https://github.com/musistudio/claude-code-router) models and synchronize them with your Claude Code settings seamlessly.
 
+**Languages**: English | [中文](README.zh.md)
+
 ## Features
 
 - **📋 View Router Config**: Display current router configuration in a formatted table with route keys, providers, and models.
