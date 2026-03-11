@@ -6,6 +6,8 @@ APP_NAME="ccr-switch"
 INSTALL_DIR="$HOME/.local/share/$APP_NAME"
 BIN_DIR="$HOME/.local/bin"
 CMD_NAME="ccrswitch"
+REPO="hjnnjh/claude-code-router-switch"
+GITHUB_RAW="https://raw.githubusercontent.com/$REPO"
 
 # ANSI colors
 GREEN='\033[0;32m'
@@ -37,17 +39,37 @@ mkdir -p "$INSTALL_DIR"
 mkdir -p "$BIN_DIR"
 mkdir -p "$HOME/.claude-code-router/presets"
 
-# 3. Copy Files
-SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-if [ ! -f "$SOURCE_DIR/sync_ccr.sh" ] || [ ! -f "$SOURCE_DIR/ccr_helper.py" ]; then
-    echo -e "${RED}Error: Source files (sync_ccr.sh, ccr_helper.py) not found in $SOURCE_DIR${NC}"
-    exit 1
+# 3. Get source files (local or remote)
+SOURCE_DIR=""
+if [ -n "${BASH_SOURCE[0]}" ] && [ "${BASH_SOURCE[0]}" != "bash" ]; then
+    SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || true
 fi
 
-echo "Copying files to $INSTALL_DIR..."
-cp "$SOURCE_DIR/sync_ccr.sh" "$INSTALL_DIR/"
-cp "$SOURCE_DIR/ccr_helper.py" "$INSTALL_DIR/"
+if [ -n "$SOURCE_DIR" ] && [ -f "$SOURCE_DIR/sync_ccr.sh" ] && [ -f "$SOURCE_DIR/ccr_helper.py" ]; then
+    # Local install: copy files from source directory
+    echo "Copying files to $INSTALL_DIR..."
+    cp "$SOURCE_DIR/sync_ccr.sh" "$INSTALL_DIR/"
+    cp "$SOURCE_DIR/ccr_helper.py" "$INSTALL_DIR/"
+else
+    # Remote install: download files from GitHub
+    echo "Downloading files from GitHub..."
+
+    if ! command -v curl &> /dev/null; then
+        echo -e "${RED}Error: 'curl' is required for remote installation.${NC}"
+        exit 1
+    fi
+
+    # Determine branch/tag: use VERSION env var if set, otherwise "master"
+    BRANCH="${CCR_SWITCH_VERSION:-master}"
+
+    for file in sync_ccr.sh ccr_helper.py; do
+        echo "  Downloading $file..."
+        if ! curl -fsSL "$GITHUB_RAW/$BRANCH/$file" -o "$INSTALL_DIR/$file"; then
+            echo -e "${RED}Error: Failed to download $file${NC}"
+            exit 1
+        fi
+    done
+fi
 
 # 4. Create Wrapper
 WRAPPER_PATH="$BIN_DIR/$CMD_NAME"

@@ -29,6 +29,22 @@ Ensure you have the following installed:
 
 ## Installation
 
+### Quick Install (Recommended)
+
+Install with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hjnnjh/claude-code-router-switch/master/install.sh | bash
+```
+
+To install a specific version:
+
+```bash
+CCR_SWITCH_VERSION=v1.1.0 curl -fsSL https://raw.githubusercontent.com/hjnnjh/claude-code-router-switch/master/install.sh | bash
+```
+
+### Manual Install
+
 1. Clone or download this repository.
 2. Make the installation script executable and run it:
 
@@ -37,8 +53,9 @@ chmod +x install.sh
 ./install.sh
 ```
 
-The script will:
-- Check for dependencies.
+### What the installer does
+
+- Check for dependencies (`python3`, `uv`, `ccr`).
 - Install the tool to `~/.local/share/ccr-switch`.
 - Create a global `ccrswitch` command in `~/.local/bin`.
 

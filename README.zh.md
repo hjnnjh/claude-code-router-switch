@@ -29,6 +29,22 @@
 
 ## 安装
 
+### 一键安装（推荐）
+
+使用一条命令即可安装：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hjnnjh/claude-code-router-switch/master/install.sh | bash
+```
+
+安装指定版本：
+
+```bash
+CCR_SWITCH_VERSION=v1.1.0 curl -fsSL https://raw.githubusercontent.com/hjnnjh/claude-code-router-switch/master/install.sh | bash
+```
+
+### 手动安装
+
 1. 克隆或下载此仓库。
 2. 赋予安装脚本执行权限并运行：
 
@@ -37,8 +53,9 @@ chmod +x install.sh
 ./install.sh
 ```
 
-脚本会：
-- 检查依赖工具。
+### 安装脚本会执行以下操作
+
+- 检查依赖工具（`python3`、`uv`、`ccr`）。
 - 安装工具到 `~/.local/share/ccr-switch`。
 - 在 `~/.local/bin` 创建全局 `ccrswitch` 命令。
 
